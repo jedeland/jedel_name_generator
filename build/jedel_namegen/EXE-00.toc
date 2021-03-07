@@ -51,7 +51,7 @@
  [],
  False,
  False,
- 1615150320,
+ 1615155436,
  [('run.exe',
    'c:\\users\\jedel\\pycharmprojects\\jedel_name_generator\\venv\\lib\\site-packages\\PyInstaller\\bootloader\\Windows-64bit\\run.exe',
    'EXECUTABLE')])

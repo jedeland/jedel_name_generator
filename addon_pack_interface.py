@@ -37,7 +37,7 @@ def npc_options():
         while console_running is True:
             npc_data_exists(True)
             try:
-                
+
                 conn = sqlite3.connect("names_merged_test.db")
                 print("Connected to ", conn)
                 df_arg = pd.read_sql_query(sql="SELECT * FROM NAMES", con=conn)
