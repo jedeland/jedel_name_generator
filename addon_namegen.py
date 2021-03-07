@@ -493,8 +493,8 @@ def add_stragglers(df, file_arg, name_fin):  # Can add gender argument, only app
         i += 1
 
     print(df)
-    conn = sqlite3.connect("name_data/names_merged.db")
-    df.to_sql
+    conn = sqlite3.connect("name_data/names_merged_test.db")
+    df.to_sql('NAMES', conn, if_exists='replace', index = False)
     return df
 
 

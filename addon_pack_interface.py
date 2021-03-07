@@ -31,12 +31,12 @@ yes_list, no_list, quit_list = ["y", "yeh", "yes", "yep", "ye"], ["n", "no", "na
 def npc_options():
     try:
         #TODO: Implement way to read from SQL instead of XLSX, as the constant interaction can lead to corruption
-        if os.path.exists("name_data/names_merged.xlsx") or os.path.exists("name_data/names_merged.db"):
+        if os.path.exists("name_data/names_merged.xlsx") or os.path.exists("name_data/names_merged_test.db"):
             console_running = True
             while console_running is True:
                 npc_data_exists(True)
                 try:
-                    conn = sqlite3.connect("name_data/names_merged.db")
+                    conn = sqlite3.connect("name_data/names_merged_test.db")
                     df_arg = pd.read_sql_query(sql="SELECT * FROM NAMES", con=conn)
                 except Exception as e:
                     print("SQL file didnt work, using backup", e)
