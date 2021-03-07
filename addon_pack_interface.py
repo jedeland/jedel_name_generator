@@ -1,6 +1,7 @@
 import random
 import sqlite3
 import sys
+from pprint import pprint
 
 import pandas as pd; import numpy as np
 import requests; import os; import re; import addon_namegen
@@ -31,214 +32,220 @@ yes_list, no_list, quit_list = ["y", "yeh", "yes", "yep", "ye"], ["n", "no", "na
 def npc_options():
     try:
         #TODO: Implement way to read from SQL instead of XLSX, as the constant interaction can lead to corruption
-        if os.path.exists("name_data/names_merged.xlsx") or os.path.exists("name_data/names_merged_test.db"):
-            console_running = True
-            while console_running is True:
-                npc_data_exists(True)
-                try:
-                    conn = sqlite3.connect("name_data/names_merged_test.db")
-                    df_arg = pd.read_sql_query(sql="SELECT * FROM NAMES", con=conn)
-                except Exception as e:
-                    print("SQL file didnt work, using backup", e)
-                    df_arg = pd.read_excel("names_merged.xlsx")
-                #print(df_arg, pd.unique(df_arg["origin"]))
-                #print(df_arg)
-                #Use this to reset fantasy tags to reapply with console
-                # try:
-                #     df_arg = df_arg.drop(df_arg[(df_arg["origin"] == "Tiefling") |  (df_arg["origin"] == "Half-Orc")
-                #                                 | (df_arg["origin"] == "Halfling") | (df_arg["origin"] == "Gnome")
-                #                                 | (df_arg["origin"] == "Elf") | (df_arg["origin"] == "Dwarf") | (df_arg["origin"] == "Dragonborn")].index)
-                # except:
-                #     pass
 
-                print("Loading NPC options ...")
-                culture_list = pd.unique(df_arg["origin"])
-                culture_list = culture_list.tolist()
-                #do_enum(culture_list)
-                non_relevant = []
-                for i in culture_list:
-                    df_temp = df_arg.loc[df_arg["origin"] == i]
+        console_running = True
+        while console_running is True:
+            npc_data_exists(True)
+            try:
+                conn = sqlite3.connect("names_merged_test.db")
+                print("Connected to ", conn)
+                df_arg = pd.read_sql_query(sql="SELECT * FROM NAMES", con=conn)
+            except Exception as e:
+                print("SQL file didnt work, using backup", e)
+                df_arg = pd.read_excel("names_merged.xlsx")
+            #print(df_arg, pd.unique(df_arg["origin"]))
+            #print(df_arg)
+            #Use this to reset fantasy tags to reapply with console
+            # try:
+            #     df_arg = df_arg.drop(df_arg[(df_arg["origin"] == "Tiefling") |  (df_arg["origin"] == "Half-Orc")
+            #                                 | (df_arg["origin"] == "Halfling") | (df_arg["origin"] == "Gnome")
+            #                                 | (df_arg["origin"] == "Elf") | (df_arg["origin"] == "Dwarf") | (df_arg["origin"] == "Dragonborn")].index)
+            # except:
+            #     pass
+
+            print("Loading NPC options ...")
+            culture_list = pd.unique(df_arg["origin"])
+            culture_list = culture_list.tolist()
+            #do_enum(culture_list)
+            non_relevant = []
+            for i in culture_list:
+                df_temp = df_arg.loc[df_arg["origin"] == i]
+                #print(df_temp)
+                if any(df_temp["tag"] != "N"):
+                    pass
+                    #print("This dataframe has regular names")
+                else:
+                    non_relevant.append(i)
+
+                    #print("This dataframe has no regular names")
+                    #print(pd.unique(df_temp["tag"]))
+            non_relevant_last = []
+            for g in culture_list:
+                df_temp_g = df_arg.loc[df_arg["origin"] == g]
+                #print(df_temp_g)
+                if any(df_temp_g["tag"] == "N"):
+                    pass
+                    #print("This DF contains last names")
+                else:
+                    non_relevant_last.append(g)
+
+                    #print("This DF contains no last names")
+
+
+            africa = ["African", "Ethiopia"]
+            arb_tag = ['Arabia', 'Armenia', 'Azerbaijan', 'Israel', 'Persian', 'Kazakhstan', 'Turkey']
+            arabia = arb_tag
+            asia = sorted(['Philippines', 'China', 'India', 'Persian', 'Japan', 'Kazakhstan', 'Korea', 'Pakistani', 'Srilanka', 'Vietnam', "Hawaiian"])
+            europe = sorted(['Albania', 'Armenia', 'Austria', 'Azerbaijan', 'Balkan', 'Basque', 'Russia', 'Belgium', 'France', 'Bulgaria', 'Celtic', 'Czech', 'Denmark', 'Dutch', 'East Frisia', 'England',
+                        'Estonia', 'Norway', 'Finland', 'Georgia', 'Germany', 'Greece', 'Hungary', 'Iceland', 'Italy', 'Latin', 'Latvia', 'Lithuania',
+                        'Luxembourg', 'Macedonia', 'Malta', 'Romania', 'Poland', 'Portugal', 'Scandinavian', 'Slavic', 'Slovakia', 'Slovenia', 'Spain', 'Sweden', 'Swiss', 'Turkey', 'Ukraine'])
+
+            fantasy = sorted(["Tiefling", "Half-Orc", "Halfling", "Gnome", "Elf", "Dwarf", "Dragonborn"])
+
+            #Fantasy genders are assorted into NN and N
+            union_list = [arabia, asia, europe, fantasy]
+            #union_text_list = [af_tag, arb_tag, as_tag, euro_tag, fantasy_tag]
+            drop_list = []
+            for i in union_list:
+
+                for item in i:
+                    df_temp = df_arg.loc[df_arg["origin"] == item]
                     #print(df_temp)
-                    if any(df_temp["tag"] != "N"):
-                        pass
-                        #print("This dataframe has regular names")
+                    if len(pd.unique(df_temp["tag"])) == 1:
+                        drop_list.append(item)
+                        i.remove(item)
                     else:
-                        non_relevant.append(i)
-
-                        #print("This dataframe has no regular names")
-                        #print(pd.unique(df_temp["tag"]))
-                non_relevant_last = []
-                for g in culture_list:
-                    df_temp_g = df_arg.loc[df_arg["origin"] == g]
-                    #print(df_temp_g)
-                    if any(df_temp_g["tag"] == "N"):
                         pass
-                        #print("This DF contains last names")
+            #print("Printing Drop List: ", drop_list)
+
+
+            #Clean dataframe to remove "does not exist" issues
+            if not drop_list:
+                print("All entries are complete, no need to add any new names ...")
+                #print(df_arg[df_arg.duplicated(subset=None, keep="first")])
+                df_duplicates = df_arg.duplicated()
+                #print(df_duplicates)
+                if df_duplicates.size >= 1:
+                    df_arg.drop_duplicates(keep="first", inplace=True)
+                    #print(df_arg)
+                    df_arg.to_excel("names_merged.xlsx", index=False)
+                #df_arg = df_arg.drop_duplicates(keep="first")
+                #print(pd.unique(df_arg["origin"]))
+            elif len(drop_list) > 0:
+                print("There are names missing, adding new names using BS4, this may take a minute ...")
+                print(drop_list)
+                print(non_relevant)
+                df_arg = create_duplicate_names(df_arg, non_relevant_last, non_relevant)
+                temp = df_arg[(df_arg["origin"] == "Ethiopia")]
+                print(pd.unique(temp["tag"]))
+            #Used later to ensure there is always a quit option
+            #Assigns cultural lists to regions
+
+            regions = {"African": africa, "Europe": europe,"Near East": arabia, "Asia": asia, "Experimental: Fantasy": fantasy}
+
+            print("Type the number of NPC's you wish to create: ")
+            npc_num = None
+            while npc_num is None:
+                try:
+                    num_arg = int(input(""))
+                    if str(num_arg).lower() in quit_list:
+                        npc_num = num_arg
+                        console_running = False
+                    elif num_arg >= 501 or num_arg <= 0:
+                        print("The program can only create between 1 and 100 npc's, please ensure you type a number between these two values, try again")
                     else:
-                        non_relevant_last.append(g)
+                        npc_num = num_arg
+                except:
+                    print("There was an error, please ensure the input is a valid whole number")
 
-                        #print("This DF contains no last names")
+            print("Are the NPC's the same culture as each other? [y/n]")
+            single_culture = None
 
-
-                africa = ["African", "Ethiopia"]
-                arb_tag = ['Arabia', 'Armenia', 'Azerbaijan', 'Israel', 'Persian', 'Kazakhstan', 'Turkey']
-                arabia = arb_tag
-                asia = sorted(['Philippines', 'China', 'India', 'Persian', 'Japan', 'Kazakhstan', 'Korea', 'Pakistani', 'Srilanka', 'Vietnam', "Hawaiian"])
-                europe = sorted(['Albania', 'Armenia', 'Austria', 'Azerbaijan', 'Balkan', 'Basque', 'Russia', 'Belgium', 'France', 'Bulgaria', 'Celtic', 'Czech', 'Denmark', 'Dutch', 'East Frisia', 'England',
-                            'Estonia', 'Norway', 'Finland', 'Georgia', 'Germany', 'Greece', 'Hungary', 'Iceland', 'Italy', 'Latin', 'Latvia', 'Lithuania',
-                            'Luxembourg', 'Macedonia', 'Malta', 'Romania', 'Poland', 'Portugal', 'Scandinavian', 'Slavic', 'Slovakia', 'Slovenia', 'Spain', 'Sweden', 'Swiss', 'Turkey', 'Ukraine'])
-
-                fantasy = sorted(["Tiefling", "Half-Orc", "Halfling", "Gnome", "Elf", "Dwarf", "Dragonborn"])
-
-                #Fantasy genders are assorted into NN and N
-                union_list = [arabia, asia, europe, fantasy]
-                #union_text_list = [af_tag, arb_tag, as_tag, euro_tag, fantasy_tag]
-                drop_list = []
-                for i in union_list:
-
-                    for item in i:
-                        df_temp = df_arg.loc[df_arg["origin"] == item]
-                        #print(df_temp)
-                        if len(pd.unique(df_temp["tag"])) == 1:
-                            drop_list.append(item)
-                            i.remove(item)
-                        else:
-                            pass
-                #print("Printing Drop List: ", drop_list)
-
-
-                #Clean dataframe to remove "does not exist" issues
-                if not drop_list:
-                    print("All entries are complete, no need to add any new names ...")
-                    #print(df_arg[df_arg.duplicated(subset=None, keep="first")])
-                    df_duplicates = df_arg.duplicated()
-                    #print(df_duplicates)
-                    if df_duplicates.size >= 1:
-                        df_arg.drop_duplicates(keep="first", inplace=True)
-                        #print(df_arg)
-                        df_arg.to_excel("name_data/names_merged.xlsx", index=False)
-                    #df_arg = df_arg.drop_duplicates(keep="first")
-                    #print(pd.unique(df_arg["origin"]))
-                elif len(drop_list) > 0:
-                    print("There are names missing, adding new names using BS4, this may take a minute ...")
-                    print(drop_list)
-                    print(non_relevant)
-                    df_arg = create_duplicate_names(df_arg, non_relevant_last, non_relevant)
-                    temp = df_arg[(df_arg["origin"] == "Ethiopia")]
-                    print(pd.unique(temp["tag"]))
-                #Used later to ensure there is always a quit option
-                #Assigns cultural lists to regions
-
-                regions = {"African": africa, "Europe": europe,"Near East": arabia, "Asia": asia, "Experimental: Fantasy": fantasy}
-
-                print("Type the number of NPC's you wish to create: ")
-                npc_num = None
-                while npc_num is None:
-                    try:
-                        num_arg = int(input(""))
-                        if str(num_arg).lower() in quit_list:
-                            npc_num = num_arg
-                            console_running = False
-                        elif num_arg >= 501 or num_arg <= 0:
-                            print("The program can only create between 1 and 100 npc's, please ensure you type a number between these two values, try again")
-                        else:
-                            npc_num = num_arg
-                    except:
-                        print("There was an error, please ensure the input is a valid whole number")
-
-                print("Are the NPC's the same culture as each other? [y/n]")
-                single_culture = None
-
-                while single_culture is None:
-                    try:
-                        culture_arg = input("")
-                        if culture_arg.lower() in yes_list:
-                            print("Creating NPC's with the same culture")
-                            single_culture = True
-                        elif culture_arg.lower() in no_list:
-                            print("Creating NPC's with different cultures")
-                            single_culture = False
-                        elif culture_arg.lower() in quit_list:
-                            console_running = False
-                        else:
-                            print("There was an error, please ensure the input corresponds to yes or no")
-                    except:
+            while single_culture is None:
+                try:
+                    culture_arg = input("")
+                    if culture_arg.lower() in yes_list:
+                        print("Creating NPC's with the same culture")
+                        single_culture = True
+                    elif culture_arg.lower() in no_list:
+                        print("Creating NPC's with different cultures")
+                        single_culture = False
+                    elif culture_arg.lower() in quit_list:
+                        console_running = False
+                    else:
                         print("There was an error, please ensure the input corresponds to yes or no")
+                except:
+                    print("There was an error, please ensure the input corresponds to yes or no")
 
-                origin_list = list(regions.keys())
-                if single_culture is True or int(npc_num) == 1:
-                    selected_nation = select_group(origin_list, regions)
-                    out_df = show_npc(df_arg, selected_nation, npc_num)
+            origin_list = list(regions.keys())
+            if single_culture is True or int(npc_num) == 1:
+                selected_nation = select_group(origin_list, regions)
+                out_df = show_npc(df_arg, selected_nation, npc_num)
 
-                    #show_table(out_df)
+                #show_table(out_df)
 
-                    print("Creating temporary excel file, set to user downloads")
-                    #Source of code snippet found here - https://www.reddit.com/r/learnpython/comments/4dfh1i/how_to_get_the_downloads_folder_path_on_windows/
-                    out_df.to_excel("name_data/generated-names.xlsx")
-                    os.remove("generated-names.xlsx")
-                    print(out_df)
-                elif single_culture is False:
-                    print("Please type the number of different NPC groups you wish to create, each with their own culture")
-                    groups = non_single_culture(df_arg, origin_list, regions, npc_num)
+                pprint(out_df)
+                download_excel([out_df])
+            elif single_culture is False:
+                print("Please type the number of different NPC groups you wish to create, each with their own culture")
+                groups = non_single_culture(df_arg, origin_list, regions, npc_num)
 
-                    print("Would you like to download the names as a file [y/n]? This will be stored in your Downloads under {}".format(os.path.join( os.getenv('USERPROFILE'), 'Downloads')))
-                    deciding = True
-                    #TODO: Add an option to use a CSV file format, as more people have word documents and it may be objectively better than Excel
-                    while deciding:
-                            download_arg = input("")
-                            if download_arg.lower() in yes_list:
-                                print("Downloading Excel file")
-                                from datetime import datetime
-                                now = datetime.now()
-                                date_string = now.strftime("%d-%m-%Y-%H%M")
-                                print(r"Argument: {0}\fluffys_generated_names_{1}.xlsx".format(os.path.join( os.getenv('USERPROFILE'), 'Downloads'), date_string))
-                                argument = r"{0}\fluffys_generated_names_{1}.xlsx".format(os.path.join( os.getenv('USERPROFILE'), 'Downloads'), date_string)
-                                writer = pd.ExcelWriter(argument, engine='xlsxwriter')
+                download_excel(groups)
 
-                                g = 0
-                                for x in groups:
-                                    g += 1
-                                    print(x)
-                                    x.to_excel(writer, sheet_name="Group {} names".format(g))
-                                writer.save()
-                                print("Done")
-                                os.system('start "excel" {}'.format(argument))
-                                deciding = False
-                            elif download_arg.lower() in no_list:
-                                print("Skipping Download")
-                                deciding = False
-                            elif download_arg.lower() in quit_list:
-                                console_running = False
-                                break
-                            else:
-                                print("There was an error, please ensure the input corresponds to yes or no")
+                # Previous implementation
+                # while group_iter != npc_out:
+                #     npc_out = divide_npc_multiculture(npc_num, group_iter)
+                #     print("Group sizes are", npc_out)
+                #     for i in npc_out:
+                #         print("Selecting NPC's for the Group with size {}".format(npc_out))
+                #         selected_nation = select_group(origin_list, regions)
+                #         out_df = show_npc(df_arg, selected_nation, int(i))
+                #         #show_table(out_df)
+                # print("Creating temporary excel file, set to user downloads")
+                # #Source of code snippet found here - https://www.reddit.com/r/learnpython/comments/4dfh1i/how_to_get_the_downloads_folder_path_on_windows/
+                # #out_df.to_excel("generated-names-multiple.xlsx")
+                # #os.remove("generated-names-multiple.xlsx")
+                # print(out_df)
+                # #print(groupings)
+            console_running = False
 
-                    # Previous implementation
-                    # while group_iter != npc_out:
-                    #     npc_out = divide_npc_multiculture(npc_num, group_iter)
-                    #     print("Group sizes are", npc_out)
-                    #     for i in npc_out:
-                    #         print("Selecting NPC's for the Group with size {}".format(npc_out))
-                    #         selected_nation = select_group(origin_list, regions)
-                    #         out_df = show_npc(df_arg, selected_nation, int(i))
-                    #         #show_table(out_df)
-                    # print("Creating temporary excel file, set to user downloads")
-                    # #Source of code snippet found here - https://www.reddit.com/r/learnpython/comments/4dfh1i/how_to_get_the_downloads_folder_path_on_windows/
-                    # #out_df.to_excel("generated-names-multiple.xlsx")
-                    # #os.remove("generated-names-multiple.xlsx")
-                    # print(out_df)
-                    # #print(groupings)
-                console_running = False
-
-            print("Program Exited")
+        print("Program Finished | Press anything to end")
+        input()
 
 
-        else:
-            npc_data_exists(False)
+        # else:
+        #     npc_data_exists(False)
 
     except FileNotFoundError:
         print("The file may be corrupted, creating new file ...")
         npc_data_exists(False)
+
+
+def download_excel(groups):
+    print("Would you like to download the names as a file [y/n]? This will be stored in your Downloads under {}".format(
+        os.path.join(os.getenv('USERPROFILE'), 'Downloads')))
+    deciding = True
+    # TODO: Add an option to use a CSV file format, as more people have word documents and it may be objectively better than Excel
+    while deciding:
+        download_arg = input("")
+        if download_arg.lower() in yes_list:
+            print("Downloading Excel file")
+            from datetime import datetime
+            now = datetime.now()
+            date_string = now.strftime("%d-%m-%Y-%H%M")
+            print(r"Argument: {0}\fluffys_generated_names_{1}.xlsx".format(
+                os.path.join(os.getenv('USERPROFILE'), 'Downloads'), date_string))
+            argument = r"{0}\fluffys_generated_names_{1}.xlsx".format(
+                os.path.join(os.getenv('USERPROFILE'), 'Downloads'), date_string)
+            writer = pd.ExcelWriter(argument, engine='xlsxwriter')
+
+            g = 0
+            for x in groups:
+                g += 1
+                print(x)
+                x.to_excel(writer, sheet_name="Group {} names".format(g))
+            writer.save()
+            print("Done")
+            os.system('start "excel" {}'.format(argument))
+            deciding = False
+        elif download_arg.lower() in no_list:
+            print("Skipping Download")
+            deciding = False
+        elif download_arg.lower() in quit_list:
+            console_running = False
+            break
+        else:
+            print("There was an error, please ensure the input corresponds to yes or no")
 
 
 def non_single_culture(df_arg, origin_list, regions, npc_num):
@@ -368,7 +375,7 @@ def show_npc(df, nations, num_npcs):
             rand_name = df.loc[(df["tag"] == "F") | (df["tag"] == "NN") | (df["tag"] == "WF")]
             gender_in = "F"
             pyside_df = append_npc(gender_tags, neutral_genders, pyside_df, rand_name, rand_surname, gender_in)
-    print(pyside_df)
+    pprint(pyside_df)
     return pyside_df
 
 
@@ -408,7 +415,7 @@ def append_npc(gender_tags, neutral_genders, pyside_df, rand_name, rand_surname,
     # Investigate numeric names in arabic name list, should of been fixed using the str.contains line above
     # print(name)
     name = re.sub(r'[^\w\s-]', '', name)
-    print("{0} NPC: {1}".format(gender, name))
+    pprint("{0} NPC: {1}".format(gender, name))
     pyside_arg = {"Gender": "{}".format(gender), "Name": "{}".format(name), "Job": "{}".format(str(job))}
     pyside_df = pyside_df.append(pyside_arg, ignore_index=True)
     #pyside_arg = {"NPC Data": "{0} NPC: {1}".format(gender, name)}
