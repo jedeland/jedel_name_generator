@@ -888,29 +888,29 @@ def get_sql_names():
     except Exception as e:
         print("Something went wrong", e)
 
-def find_location_names(number_of_values=10, user_arg="France"):
-    #TODO: Create alternative that copies the gen_townnames_.db from this directory to the history gen directoy, using try and except
-    conn = sqlite3.connect('C://Users//jedel//PycharmProjects//Lorem_Ipsum_Gen//Name_Gen//gen_townnames_.db')
-    c = conn.cursor()
-    df = pd.read_sql(sql='SELECT * FROM NAMES', con=conn)
-    #Left out austria because there is somethign wrong with it atm
-    european_group = ['Albania', 'Belarus', 'Belgium', 'Bulgaria', 'Croatia', 'Czech Republic', 'Estonia', 'Finland', 'France',
-    'Germany', 'Greece', 'Hungary','Ireland',
-    'Italy', 'Kosovo', 'Latvia', 'Luxembourg', 'Macedonia',
-    'Malta', 'Netherlands', 'Norway','Poland', 'Portugal',
-    'Romania', 'Russia', 'Serbia', 'Slovakia', 'Slovenia',
-    'Spain', 'Sweden', 'Switzerland','Turkey',
-    'Ukraine', 'United Kingdom']
-    #df = df[df["Origin"].isin(european_group)]
-
-    #df_culture = df[df["Origin"] == random.choice(pd.unique(df["Origin"]))]
-    df_culture = df[df["Origin"] == user_arg]
-    out_value = df_culture.sample(number_of_values)
-
-    location_dict = {"{}".format(df_culture["Origin"].iloc[0]) : out_value["Name"].to_list()}
-
-    return location_dict
-
-
-locations = find_location_names(20, "France")
-print(locations)
+# def find_location_names(number_of_values=10, user_arg="France"):
+#     #TODO: Create alternative that copies the gen_townnames_.db from this directory to the history gen directoy, using try and except
+#     conn = sqlite3.connect('C://Users//jedel//PycharmProjects//Lorem_Ipsum_Gen//Name_Gen//gen_townnames_.db')
+#     c = conn.cursor()
+#     df = pd.read_sql(sql='SELECT * FROM NAMES', con=conn)
+#     #Left out austria because there is somethign wrong with it atm
+#     european_group = ['Albania', 'Belarus', 'Belgium', 'Bulgaria', 'Croatia', 'Czech Republic', 'Estonia', 'Finland', 'France',
+#     'Germany', 'Greece', 'Hungary','Ireland',
+#     'Italy', 'Kosovo', 'Latvia', 'Luxembourg', 'Macedonia',
+#     'Malta', 'Netherlands', 'Norway','Poland', 'Portugal',
+#     'Romania', 'Russia', 'Serbia', 'Slovakia', 'Slovenia',
+#     'Spain', 'Sweden', 'Switzerland','Turkey',
+#     'Ukraine', 'United Kingdom']
+#     #df = df[df["Origin"].isin(european_group)]
+#
+#     #df_culture = df[df["Origin"] == random.choice(pd.unique(df["Origin"]))]
+#     df_culture = df[df["Origin"] == user_arg]
+#     out_value = df_culture.sample(number_of_values)
+#
+#     location_dict = {"{}".format(df_culture["Origin"].iloc[0]) : out_value["Name"].to_list()}
+#
+#     return location_dict
+#
+#
+# locations = find_location_names(20, "France")
+# print(locations)
