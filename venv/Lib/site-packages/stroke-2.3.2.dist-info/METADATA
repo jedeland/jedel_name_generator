@@ -1,0 +1,186 @@
+Metadata-Version: 2.1
+Name: stroke
+Version: 2.3.2
+Summary: Utilities for & with strings.
+Home-page: https://github.com/Exahilosys/stroke
+Author: Exahilosys
+Author-email: exahilosys@gmail.com
+License: MIT
+Download-URL: https://github.com/Exahilosys/stroke/archive/v2.3.2.tar.gz
+Platform: UNKNOWN
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Intended Audience :: Developers
+Classifier: Natural Language :: English
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Utilities
+Description-Content-Type: text/markdown
+
+## Installing
+
+```
+python3 -m pip install stroke
+```
+
+Useful for creating a simple command based interface
+```python
+import stroke
+
+commands = stroke.State()
+
+# create command
+@commands.sub('echo')
+def commands_0(content):
+
+  print(content)
+
+# this is a subcommand
+@commands_0.sub('loud')
+def commands_0_0(content):
+
+  content = content.upper()
+
+  print(content)
+
+# another subcommand with aliases
+@commands_0.sub('pretty', 'aesthetic')
+def commands_0_1(content):
+
+  content = ' '.join(iter(content))
+
+  print(content)
+
+def main(content):
+
+  # analyse into names separated by .
+  # anything after a space is the argument
+  # use the names to find the invoke
+  # KeyError will be raised on invalid trail
+  (names, argument, invoke) = commands.analyse(content)
+
+  invoke(argument)
+
+main('echo marco') # not polo
+
+main('echo.loud whoa') # > WHOA
+
+main('echo.aesthetic fancy words') # chill vibes
+```
+
+Useful for parsing arguments into parts
+```python
+import stroke
+
+commands = stroke.State()
+
+figure_0 = {
+  '-and': 'int'
+}
+
+@commands.sub('add')
+def commands_0(content):
+
+  # list of (flag, value)
+  arguments = stroke.craft(figure_0, content)
+
+  value = 0
+
+  # flag is always -and
+  for (flag, argument) in arguments:
+
+    value += int(argument)
+
+  print('result', value)
+
+figure_1 = {
+  '-upper': 'numerator',
+  '-lower': 'denominator'
+}
+
+@commands.sub('div')
+def commands_1(content):
+
+  # same thing
+  arguments = stroke.craft(figure_1, content)
+
+  # ignore multiple flags
+  arguments = dict(arguments)
+
+  # we need every flag for this one
+  values = (arguments[key] for key in figure_1)
+
+  # convert and unpack
+  (upper, lower) = map(int, values)
+
+  # handle errors on demand
+  value = upper / lower
+
+  print('result', value)
+
+figure_2 = {
+  '-and': {
+    '-op': 'name',
+    '-co': 'args'
+  }
+}
+
+@commands.sub('calc')
+def commands_2(content):
+
+  # this is actually a generator
+  arguments = stroke.craft(figure_2, content)
+
+  # here, argument is also one
+  for (flag, argument) in arguments:
+
+    # we only need one invoke
+    invoke = None
+
+    # can be executed multiple times
+    contents = []
+
+    for (flag, argument) in argument:
+
+      # signal for name
+      if flag == '-op':
+
+        # ignore empties
+        if not argument:
+
+            continue
+
+        # only first
+        if not invoke:
+
+          # get the invoke from name
+          invoke = commands.trail(argument)
+
+        continue
+
+      # no need to check if -co
+      contents.append(argument)
+
+    # execute commands
+    for content in contents:
+
+      invoke(content)
+
+def main(content):
+
+  (names, argument, invoke) = commands.analyse(content)
+
+  invoke(argument)
+
+print('>', stroke.draw(figure_0))
+main('add 5 -and 9 -and -3') # 11
+
+print('>', stroke.draw(figure_1, full = True))
+main('div -upper 20 -lower 2 -upper 15') # 7.5
+
+print('>', stroke.draw(figure_2, full = True))
+main('calc add -co 1 \-and 2 -and div -co -upper 1 -lower 4') # 3 and 0.25
+```
+
+
